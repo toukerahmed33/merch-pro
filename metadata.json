@@ -1,0 +1,8 @@
+{
+  "name": "MerchProcure",
+  "description": "Enterprise Garments Manufacturing SaaS for procurement planning, RFQ bidding, vendor hubs, and multi-level approvals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

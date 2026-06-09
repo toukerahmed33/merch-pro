@@ -1,0 +1,378 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (First Rule Block)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && (
+        request.auth.token.email_verified == true || 
+        request.auth.token.firebase.sign_in_provider == 'google.com' ||
+        request.auth.token.firebase.sign_in_provider == 'anonymous'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Root Admin Check to allow system-level control
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "anikahmedcos@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'User') == "Admin")
+      );
+    }
+
+    // Validation Schemas
+    function isValidVendor(v) {
+      return v.keys().hasAll(['id', 'name', 'tier']) &&
+             v.id is string &&
+             v.name is string && v.name.size() > 0 && v.name.size() <= 200 &&
+             v.tier is string;
+    }
+
+    function isValidRFQ(r) {
+      return r.keys().hasAll(['id', 'type', 'material', 'quantity', 'status']) &&
+             r.id is string &&
+             r.type is string &&
+             r.material is string && r.material.size() <= 500 &&
+             r.quantity is string &&
+             r.status is string;
+    }
+
+    function isValidQuotation(q) {
+      return q.keys().hasAll(['id', 'rfqId', 'vendorId', 'vendorName', 'pricePerUnit']) &&
+             q.id is string &&
+             q.rfqId is string &&
+             q.vendorId is string &&
+             q.vendorName is string &&
+             q.pricePerUnit is string;
+    }
+
+    function isValidApproval(a) {
+      return a.keys().hasAll(['id', 'type', 'title', 'status']) &&
+             a.id is string &&
+             a.type is string &&
+             a.title is string &&
+             a.status is string;
+    }
+
+    function isValidWorkOrder(w) {
+      return w.keys().hasAll(['id', 'rfqId', 'vendorName', 'material', 'status', 'qcStatus']) &&
+             w.id is string &&
+             w.rfqId is string &&
+             w.vendorName is string &&
+             w.material is string &&
+             w.status is string &&
+             w.qcStatus is string;
+    }
+
+    // Quality Inspector validations
+    function isValidInspection(i) {
+      return i.keys().hasAll(['id', 'orderId', 'inspectorName', 'status']) &&
+             i.id is string &&
+             i.orderId is string &&
+             i.inspectorName is string &&
+             i.status is string;
+    }
+
+    function isValidProcurementPlan(p) {
+      return p.keys().hasAll(['id', 'itemName', 'budget', 'status']) &&
+             p.id is string &&
+             p.itemName is string &&
+             p.budget is string &&
+             p.status is string;
+    }
+
+    function isValidEmailLog(l) {
+      return l.keys().hasAll(['id', 'rfqId', 'vendorName', 'email']) &&
+             l.id is string &&
+             l.rfqId is string &&
+             l.vendorName is string &&
+             l.email is string;
+    }
+
+    function isValidNoa(n) {
+      return n.keys().hasAll(['id', 'rfqId', 'vendorName', 'amount', 'issueDate', 'status']) &&
+             n.id is string &&
+             n.rfqId is string &&
+             n.vendorName is string &&
+             n.amount is string &&
+             n.issueDate is string &&
+             n.status is string;
+    }
+
+    function isValidContract(c) {
+      return c.keys().hasAll(['id', 'rfqId', 'vendorName', 'terms', 'amount', 'status', 'contractNo', 'createdAt']) &&
+             c.id is string &&
+             c.rfqId is string &&
+             c.vendorName is string &&
+             c.terms is string &&
+             c.amount is string &&
+             c.status is string &&
+             c.contractNo is string &&
+             c.createdAt is string;
+    }
+
+    function isValidPayment(p) {
+      return p.keys().hasAll(['id', 'orderId', 'vendorName', 'invoiceId', 'amount', 'invoiceAmount', 'poAmount', 'status']) &&
+             p.id is string &&
+             p.orderId is string &&
+             p.vendorName is string &&
+             p.invoiceId is string &&
+             p.amount is string &&
+             p.invoiceAmount is string &&
+             p.poAmount is string &&
+             p.status is string;
+    }
+
+    function isValidUser(u) {
+      return u.keys().hasAll(['email', 'createdAt']) &&
+             u.email is string &&
+             u.createdAt is string;
+    }
+
+    function isValidFolder(f) {
+      return f.keys().hasAll(['name', 'createdAt']) &&
+             f.name is string && f.name.size() > 0 && f.name.size() <= 200 &&
+             f.createdAt is string;
+    }
+
+    function isValidFile(f) {
+      return f.keys().hasAll(['name', 'size', 'createdAt']) &&
+             f.name is string && f.name.size() > 0 && f.name.size() <= 200 &&
+             f.size is string &&
+             f.createdAt is string;
+    }
+
+    function isValidNote(n) {
+      return n.keys().hasAll(['title', 'createdAt']) &&
+             n.title is string && n.title.size() > 0 && n.title.size() <= 200 &&
+             n.createdAt is string;
+    }
+
+    function isValidTeamMember(t) {
+      return t.keys().hasAll(['name', 'createdAt']) &&
+             t.name is string && t.name.size() > 0 && t.name.size() <= 200 &&
+             t.createdAt is string;
+    }
+
+    function isValidCompany(c) {
+      return c.keys().hasAll(['id', 'name', 'tier', 'location', 'status', 'createdAt']) &&
+             c.id is string &&
+             c.name is string &&
+             c.tier is string &&
+             c.location is string &&
+             c.status is string &&
+             c.createdAt is string;
+    }
+
+    function isValidBillingRecord(b) {
+      return b.keys().hasAll(['id', 'userId', 'userEmail', 'plan', 'amount', 'status', 'date', 'invoiceNo']) &&
+             b.id is string &&
+             b.userId is string &&
+             b.userEmail is string &&
+             b.plan is string &&
+             b.amount is string &&
+             b.status is string &&
+             b.date is string &&
+             b.invoiceNo is string;
+    }
+
+    function isValidAuditLog(l) {
+      return l.keys().hasAll(['id', 'userEmail', 'action', 'details', 'timestamp']) &&
+             l.id is string &&
+             l.userEmail is string &&
+             l.action is string &&
+             l.details is string &&
+             l.timestamp is string;
+    }
+
+    // Standard Consultant Term of Reference validations
+    function isValidToR(t) {
+      return t.keys().hasAll(['id', 'title', 'expertType', 'technicalWeight', 'financialWeight', 'budget', 'deadline', 'status']) &&
+             t.id is string &&
+             t.title is string && t.title.size() > 0 && t.title.size() <= 200 &&
+             t.expertType is string &&
+             t.technicalWeight is number &&
+             t.financialWeight is number &&
+             t.budget is string &&
+             t.deadline is string &&
+             t.status is string;
+    }
+
+    // Consultant Evaluation Score Sheet validations
+    function isValidEvaluation(e) {
+      return e.keys().hasAll(['id', 'torId', 'consultantName', 'technicalScores', 'financialProposal', 'technicalScoreWeighted', 'financialScoreWeighted', 'totalScore', 'status']) &&
+             e.id is string &&
+             e.torId is string &&
+             e.consultantName is string && e.consultantName.size() > 0 && e.consultantName.size() <= 200 &&
+             e.technicalScores is map &&
+             e.financialProposal is number &&
+             e.technicalScoreWeighted is number &&
+             e.financialScoreWeighted is number &&
+             e.totalScore is number &&
+             e.status is string;
+    }
+
+    // Collection Security Rules
+    match /vendors/{vendorId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(vendorId) && isValidVendor(incoming());
+      allow update: if isEmailVerified() && isValidId(vendorId) && isValidVendor(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /rfqs/{rfqId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(rfqId) && isValidRFQ(incoming());
+      allow update: if isEmailVerified() && isValidId(rfqId) && isValidRFQ(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /quotations/{quotationId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(quotationId) && isValidQuotation(incoming());
+      allow update: if isEmailVerified() && isValidId(quotationId) && isValidQuotation(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /approvals/{approvalId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(approvalId) && isValidApproval(incoming());
+      allow update: if isEmailVerified() && isValidId(approvalId) && isValidApproval(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /noas/{noaId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(noaId) && isValidNoa(incoming());
+      allow update: if isEmailVerified() && isValidId(noaId) && isValidNoa(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /contracts/{contractId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(contractId) && isValidContract(incoming());
+      allow update: if isEmailVerified() && isValidId(contractId) && isValidContract(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /workorders/{workorderId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(workorderId) && isValidWorkOrder(incoming());
+      allow update: if isEmailVerified() && isValidId(workorderId) && isValidWorkOrder(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /inspections/{inspectionId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(inspectionId) && isValidInspection(incoming());
+      allow update: if isEmailVerified() && isValidId(inspectionId) && isValidInspection(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /procurementplans/{planId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(planId) && isValidProcurementPlan(incoming());
+      allow update: if isEmailVerified() && isValidId(planId) && isValidProcurementPlan(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /emaillogs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(logId) && isValidEmailLog(incoming());
+      allow update: if isEmailVerified() && isValidId(logId) && isValidEmailLog(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(paymentId) && isValidPayment(incoming());
+      allow update: if isEmailVerified() && isValidId(paymentId) && isValidPayment(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /companies/{companyId} {
+      allow read: if isSignedIn();
+      allow write: if isEmailVerified();
+    }
+
+    match /billing/{billingId} {
+      allow read: if isSignedIn();
+      allow write: if isEmailVerified();
+    }
+
+    match /auditlogs/{logId} {
+      allow read: if isSignedIn();
+      allow write: if isEmailVerified();
+    }
+
+    match /tors/{torId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(torId) && isValidToR(incoming());
+      allow update: if isEmailVerified() && isValidId(torId) && isValidToR(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /evaluations/{evaluationId} {
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidId(evaluationId) && isValidEvaluation(incoming());
+      allow update: if isEmailVerified() && isValidId(evaluationId) && isValidEvaluation(incoming());
+      allow delete: if isEmailVerified() && isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if (isSignedIn() && request.auth.uid == uid) || isAdmin();
+      allow create: if (isEmailVerified() && request.auth.uid == uid && isValidUser(incoming())) || isAdmin();
+      allow update: if (isEmailVerified() && request.auth.uid == uid && isValidUser(incoming())) || isAdmin();
+      allow delete: if (isEmailVerified() && request.auth.uid == uid) || isAdmin();
+
+      match /folders/{folderId} {
+        allow read: if (isSignedIn() && request.auth.uid == uid) || isAdmin();
+        allow create: if (isEmailVerified() && request.auth.uid == uid && isValidId(folderId) && isValidFolder(incoming())) || isAdmin();
+        allow update: if (isEmailVerified() && request.auth.uid == uid && isValidFolder(incoming())) || isAdmin();
+        allow delete: if (isEmailVerified() && request.auth.uid == uid) || isAdmin();
+      }
+      
+      match /files/{fileId} {
+        allow read: if (isSignedIn() && request.auth.uid == uid) || isAdmin();
+        allow create: if (isEmailVerified() && request.auth.uid == uid && isValidId(fileId) && isValidFile(incoming())) || isAdmin();
+        allow update: if (isEmailVerified() && request.auth.uid == uid && isValidFile(incoming())) || isAdmin();
+        allow delete: if (isEmailVerified() && request.auth.uid == uid) || isAdmin();
+      }
+
+      match /notes/{noteId} {
+        allow read: if (isSignedIn() && request.auth.uid == uid) || isAdmin();
+        allow create: if (isEmailVerified() && request.auth.uid == uid && isValidId(noteId) && isValidNote(incoming())) || isAdmin();
+        allow update: if (isEmailVerified() && request.auth.uid == uid && isValidNote(incoming())) || isAdmin();
+        allow delete: if (isEmailVerified() && request.auth.uid == uid) || isAdmin();
+      }
+
+      match /teamMembers/{memberId} {
+        allow read: if (isSignedIn() && request.auth.uid == uid) || isAdmin();
+        allow create: if (isEmailVerified() && request.auth.uid == uid && isValidId(memberId) && isValidTeamMember(incoming())) || isAdmin();
+        allow update: if (isEmailVerified() && request.auth.uid == uid && isValidTeamMember(incoming())) || isAdmin();
+        allow delete: if (isEmailVerified() && request.auth.uid == uid) || isAdmin();
+      }
+    }
+  }
+}

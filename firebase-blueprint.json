@@ -1,0 +1,416 @@
+{
+  "entities": {
+    "Vendor": {
+      "title": "Vendor",
+      "description": "Mill or accessory supplier record containing compliance certifications status.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "tier": { "type": "string" },
+        "rating": { "type": "string" },
+        "scope": { "type": "string" },
+        "contact": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "logo": { "type": "string" },
+        "documents": { "type": "object" }
+      },
+      "required": ["id", "name", "tier", "email"]
+    },
+    "RFQ": {
+      "title": "RFQ",
+      "description": "Request for quotation spec sheet for raw fibers and mills.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "material": { "type": "string" },
+        "quantity": { "type": "string" },
+        "targetDate": { "type": "string" },
+        "bidsCount": { "type": "integer" },
+        "status": { "type": "string" },
+        "urgency": { "type": "string" },
+        "gsm": { "type": "string" },
+        "fabricComposition": { "type": "string" },
+        "yarnCount": { "type": "string" },
+        "serviceScope": { "type": "string" },
+        "constructionSpecs": { "type": "string" },
+        "termsAndConditions": { "type": "string" },
+        "sentToVendors": { "type": "array" },
+        "sentLogs": { "type": "array" }
+      },
+      "required": ["id", "type", "material", "quantity", "targetDate", "status", "urgency"]
+    },
+    "Quotation": {
+      "title": "Quotation",
+      "description": "A specific pricing bid submitted by a mill in response to an RFQ.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rfqId": { "type": "string" },
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "pricePerUnit": { "type": "string" },
+        "leadTimeDays": { "type": "integer" },
+        "complianceScore": { "type": "number" },
+        "paymentTerms": { "type": "string" },
+        "specialNotes": { "type": "string" },
+        "isPreferred": { "type": "boolean" }
+      },
+      "required": ["id", "rfqId", "vendorId", "vendorName", "pricePerUnit", "leadTimeDays"]
+    },
+    "Approval": {
+      "title": "Approval",
+      "description": "A request for a sourcing signoff or finance release.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "requestedBy": { "type": "string" },
+        "date": { "type": "string" },
+        "amount": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "type", "title", "requestedBy", "date", "status"]
+    },
+    "WorkOrder": {
+      "title": "WorkOrder",
+      "description": "An issued, active work order released to a mill after winning an RFQ.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rfqId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "material": { "type": "string" },
+        "quantity": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string" },
+        "qcStatus": { "type": "string" }
+      },
+      "required": ["id", "rfqId", "vendorName", "material", "quantity", "startDate", "endDate", "status", "qcStatus"]
+    },
+    "Inspection": {
+      "title": "Inspection",
+      "description": "A quality control check performed by inspectors on a specific work order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderId": { "type": "string" },
+        "material": { "type": "string" },
+        "inspectorName": { "type": "string" },
+        "defectRate": { "type": "number" },
+        "findings": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "orderId", "material", "inspectorName", "defectRate", "findings", "status"]
+    },
+    "ProcurementPlan": {
+      "title": "ProcurementPlan",
+      "description": "A forward-looking plan outlining future sourcing cycles.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "itemName": { "type": "string" },
+        "targetDate": { "type": "string" },
+        "status": { "type": "string" },
+        "quantity": { "type": "string" },
+        "budget": { "type": "string" }
+      },
+      "required": ["id", "itemName", "targetDate", "status", "quantity", "budget"]
+    },
+    "EmailLog": {
+      "title": "EmailLog",
+      "description": "A simulation record of outbound RFQ invitations emailed to external mills.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rfqId": { "type": "string" },
+        "rfqMaterial": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "email": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "rfqId", "rfqMaterial", "vendorName", "email", "timestamp", "status"]
+    },
+    "Noa": {
+      "title": "Noa",
+      "description": "Notice of Award issued for a tender winner.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rfqId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "amount": { "type": "string" },
+        "issueDate": { "type": "string" },
+        "status": { "type": "string" },
+        "rfqMaterial": { "type": "string" },
+        "rfqQty": { "type": "string" },
+        "esignatureSim": { "type": "object" }
+      },
+      "required": ["id", "rfqId", "vendorName", "amount", "issueDate", "status"]
+    },
+    "Contract": {
+      "title": "Contract",
+      "description": "Garment manufacturing sourcing contract trade agreement.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rfqId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "terms": { "type": "string" },
+        "amount": { "type": "string" },
+        "status": { "type": "string" },
+        "contractNo": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "material": { "type": "string" },
+        "quantity": { "type": "string" },
+        "esignatureSim": { "type": "object" }
+      },
+      "required": ["id", "rfqId", "vendorName", "terms", "amount", "status", "contractNo", "createdAt"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Invoice payment approval and financial disburser release request.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "invoiceId": { "type": "string" },
+        "amount": { "type": "string" },
+        "invoiceAmount": { "type": "string" },
+        "poAmount": { "type": "string" },
+        "matchedStatus": {
+          "type": "string",
+          "enum": ["Fully Matched", "Variance Detected", "Unverified"]
+        },
+        "dueDate": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "comment": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["Pending Sourcing Approver", "Pending Manager Approver", "Pending CFO Approver", "Completed", "Rejected"]
+        },
+        "approvals": {
+          "type": "object",
+          "properties": {
+            "level1": {
+              "type": "object",
+              "properties": {
+                "approver": { "type": "string" },
+                "approvedAt": { "type": "string" },
+                "status": { "type": "string", "enum": ["Approved", "Rejected"] },
+                "comment": { "type": "string" }
+              },
+              "required": ["approver", "approvedAt", "status"]
+            },
+            "level2": {
+              "type": "object",
+              "properties": {
+                "approver": { "type": "string" },
+                "approvedAt": { "type": "string" },
+                "status": { "type": "string", "enum": ["Approved", "Rejected"] },
+                "comment": { "type": "string" }
+              },
+              "required": ["approver", "approvedAt", "status"]
+            },
+            "level3": {
+              "type": "object",
+              "properties": {
+                "approver": { "type": "string" },
+                "approvedAt": { "type": "string" },
+                "status": { "type": "string", "enum": ["Approved", "Rejected"] },
+                "comment": { "type": "string" }
+              },
+              "required": ["approver", "approvedAt", "status"]
+            }
+          }
+        }
+      },
+      "required": ["id", "orderId", "vendorName", "invoiceId", "amount", "invoiceAmount", "poAmount", "matchedStatus", "dueDate", "createdAt", "status"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Authenticated user profile metadata.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "plan": { "type": "string" },
+        "role": { "type": "string" },
+        "company": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Folder": {
+      "title": "Folder",
+      "description": "User folders to organize files.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "createdAt"]
+    },
+    "File": {
+      "title": "File",
+      "description": "User files metadata records.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "folderId": { "type": "string" },
+        "size": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "size", "createdAt"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "User notes or memo cards.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "createdAt"]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "Members of the user's organization.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "createdAt"]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "SaaS tenant companies under procurement networks.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "tier": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "tier", "location", "status", "createdAt"]
+    },
+    "BillingRecord": {
+      "title": "BillingRecord",
+      "description": "Billing audit invoices.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "plan": { "type": "string" },
+        "amount": { "type": "string" },
+        "status": { "type": "string" },
+        "date": { "type": "string" },
+        "invoiceNo": { "type": "string" }
+      },
+      "required": ["id", "userId", "userEmail", "plan", "amount", "status", "date", "invoiceNo"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Historic system audit events log trail.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "userEmail", "action", "details", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/vendors/{vendorId}": {
+      "schema": "Vendor",
+      "description": "A collection of textile/accessory vendors."
+    },
+    "/rfqs/{rfqId}": {
+      "schema": "RFQ",
+      "description": "A collection of apparel manufacturing tendering RFQs."
+    },
+    "/quotations/{quotationId}": {
+      "schema": "Quotation",
+      "description": "Bids and quotes returned from mills."
+    },
+    "/approvals/{approvalId}": {
+      "schema": "Approval",
+      "description": "Sourcing and budgetary signoff logs."
+    },
+    "/noas/{noaId}": {
+      "schema": "Noa",
+      "description": "Notices of Sourcing Award issued to winning suppliers."
+    },
+    "/contracts/{contractId}": {
+      "schema": "Contract",
+      "description": "Legally drafted and electronically signed purchase trade contracts."
+    },
+    "/workorders/{workorderId}": {
+      "schema": "WorkOrder",
+      "description": "Sourcing orders issued to vendors."
+    },
+    "/inspections/{inspectionId}": {
+      "schema": "Inspection",
+      "description": "QC findings and defect rates for work orders."
+    },
+    "/procurementplans/{planId}": {
+      "schema": "ProcurementPlan",
+      "description": "Forward looking procurement targets."
+    },
+    "/emaillogs/{logId}": {
+      "schema": "EmailLog",
+      "description": "Log records of SMTP-sent RFQ emails."
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Multi-tiered financial disburser release requests."
+    },
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles with billing tier info."
+    },
+    "/users/{uid}/folders/{folderId}": {
+      "schema": "Folder",
+      "description": "Foldering structures organized by users."
+    },
+    "/users/{uid}/files/{fileId}": {
+      "schema": "File",
+      "description": "Document metadata items of user folders."
+    },
+    "/users/{uid}/notes/{noteId}": {
+      "schema": "Note",
+      "description": "Notes crafted by each SaaS user."
+    },
+    "/users/{uid}/teamMembers/{memberId}": {
+      "schema": "TeamMember",
+      "description": "Collaborators in user-specific team workspace."
+    },
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Tenant registered companies."
+    },
+    "/billing/{billingId}": {
+      "schema": "BillingRecord",
+      "description": "Simulated and actual bills and invoices."
+    },
+    "/auditlogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Live audit logs tracker for system events."
+    }
+  }
+}
